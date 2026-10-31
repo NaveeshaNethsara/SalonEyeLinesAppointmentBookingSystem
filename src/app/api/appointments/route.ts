@@ -57,6 +57,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Customer name and phone number are required." }, { status: 400 });
     }
 
+    if (!body.date || !body.time || !String(body.date).trim() || !String(body.time).trim()) {
+      return NextResponse.json({ error: "Appointment date and time slot are required." }, { status: 400 });
+    }
+
     const serviceIds =
       body.serviceIds && Array.isArray(body.serviceIds) && body.serviceIds.length > 0
         ? body.serviceIds

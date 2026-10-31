@@ -94,16 +94,26 @@ export const STANDARD_SLOT_TIMES = [
 ];
 
 export function parseColomboDateTime(dateStr: string, timeStr: string): Date {
+  if (!dateStr || !timeStr || !timeStr.trim()) {
+    throw new Error(`Invalid appointment date or time: date="${dateStr}", time="${timeStr}"`);
+  }
   const cleanTime = timeStr.trim().toUpperCase();
   let [timePart, modifier] = cleanTime.split(' ');
   let [hoursStr, minutesStr] = timePart.split(':');
   let hours = parseInt(hoursStr, 10);
   const minutes = parseInt(minutesStr, 10);
 
+  if (isNaN(hours) || isNaN(minutes)) {
+    throw new Error(`Invalid appointment time format: "${timeStr}". Expected "HH:mm AM/PM" or "HH:mm"`);
+  }
+
   if (modifier === 'PM' && hours < 12) hours += 12;
   if (modifier === 'AM' && hours === 12) hours = 0;
 
   const [year, month, day] = dateStr.split('-').map(Number);
+  if (isNaN(year) || isNaN(month) || isNaN(day)) {
+    throw new Error(`Invalid appointment date format: "${dateStr}". Expected "YYYY-MM-DD"`);
+  }
   // Sri Lanka standard time is UTC+5:30 -> subtract 5 hours 30 mins to get UTC Date
   return new Date(Date.UTC(year, month - 1, day, hours - 5, minutes - 30));
 }
@@ -1196,7 +1206,7 @@ export class BookingEngine {
           // Check working hours
           const wh = staff.workingHours?.find((w: any) => w.dayOfWeek === dayOfWeek);
           if (wh) {
-            if (!wh.isWorking) {
+            if (wh.isWorkingDay === false || (wh as any).isWorking === false) {
               conflictFound = true;
               failureReason = `${staff.name} is off duty today`;
               break;

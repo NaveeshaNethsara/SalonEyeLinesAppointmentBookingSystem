@@ -127,15 +127,15 @@ function BookingContent() {
       .catch((err) => console.warn("Failed to fetch slots from server:", err));
   }, [selectedDate, selectedServices, selectedStaff?.id]);
 
-  // If slot becomes unavailable on date/service change, clear selection
+  // If slot becomes unavailable on date/service change, clear selection (only while user is actively on date/time step)
   useEffect(() => {
-    if (selectedTime && serverSlots.length > 0) {
+    if (step === 3 && selectedTime && serverSlots.length > 0) {
       const slot = serverSlots.find((s) => s.time === selectedTime);
       if (slot && !slot.available) {
         setSelectedTime("");
       }
     }
-  }, [serverSlots, selectedTime]);
+  }, [serverSlots, selectedTime, step]);
 
   const handleToggleService = (service: ServiceItem) => {
     setErrorMsg("");
@@ -227,6 +227,11 @@ function BookingContent() {
 
       setStep(4);
     } else if (step === 4) {
+      if (!selectedDate || !selectedTime) {
+        setErrorMsg("Please choose an appointment date and available time slot before continuing.");
+        setStep(3);
+        return;
+      }
       if (!clientName.trim() || clientName.length < 3) {
         setErrorMsg("Please enter your full name.");
         return;
