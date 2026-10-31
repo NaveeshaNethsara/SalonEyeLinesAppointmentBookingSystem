@@ -1,0 +1,470 @@
+@import "tailwindcss/base";
+@import "tailwindcss/components";
+@import "tailwindcss/utilities";
+
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,600&family=Montserrat:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --font-cormorant: 'Cormorant Garamond', Georgia, serif;
+  --font-montserrat: 'Montserrat', -apple-system, sans-serif;
+}
+
+body {
+  background-color: #FAF7F2;
+  color: #2B2825;
+  font-family: var(--font-montserrat);
+  line-height: 1.7;
+}
+
+h1, h2, h3, h4, .font-serif {
+  font-family: var(--font-cormorant);
+}
+
+/* Custom Luxury Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #FAF7F2;
+}
+::-webkit-scrollbar-thumb {
+  background: #D7BF9F;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #C5A880;
+}
+
+/* ==========================================================================
+   MOTION DESIGN SYSTEM (LottieFiles Motion Principles - Premium Archetype)
+   ========================================================================== */
+:root {
+  --ease-premium: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-smooth: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* 1. Shimmer Gleam Effect across Luxury Buttons & Badges */
+.shimmer-gold {
+  position: relative;
+  overflow: hidden;
+}
+.shimmer-gold::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -150%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.35) 50%,
+    transparent 100%
+  );
+  transform: skewX(-20deg);
+  animation: shimmerSweep 4.5s infinite var(--ease-smooth);
+  pointer-events: none;
+}
+
+@keyframes shimmerSweep {
+  0% {
+    left: -150%;
+  }
+  35% {
+    left: 200%;
+  }
+  100% {
+    left: 200%;
+  }
+}
+
+/* 2. Luxury Button Hover & Press Feedback */
+.btn-luxury {
+  transition: transform 200ms var(--ease-premium), box-shadow 260ms var(--ease-premium), background-color 200ms ease;
+  position: relative;
+  overflow: hidden;
+}
+.btn-luxury:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px -6px rgba(180, 144, 100, 0.42);
+}
+.btn-luxury:active {
+  transform: translateY(0px) scale(0.98);
+}
+
+/* 3. Luxury Card Elevation & Micro-Scale */
+.luxury-card {
+  transition: transform 380ms var(--ease-premium), box-shadow 380ms var(--ease-premium), border-color 380ms var(--ease-premium);
+  will-change: transform, box-shadow;
+}
+.luxury-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 22px 45px -12px rgba(180, 144, 100, 0.22);
+  border-color: rgba(215, 191, 159, 0.85);
+}
+
+/* 4. Smooth Cinematic Image Scaling within Cards */
+.luxury-card img, .image-zoom-container img {
+  transition: transform 650ms var(--ease-smooth);
+  will-change: transform;
+}
+.luxury-card:hover img, .image-zoom-container:hover img {
+  transform: scale(1.055);
+}
+
+/* 5. Animated Nav Link Indicator */
+.nav-link-motion {
+  position: relative;
+  transition: color 220ms var(--ease-premium);
+}
+.nav-link-motion::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  width: 100%;
+  height: 1.5px;
+  background: #B49064;
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform 260ms var(--ease-premium);
+}
+.nav-link-motion:hover::after {
+  transform: scaleX(1);
+  transform-origin: left;
+}
+
+/* 6. Subtle Gold Glow Pulse for Ambient Backgrounds */
+.ambient-gold-glow {
+  animation: glowPulse 4.5s ease-in-out infinite;
+}
+@keyframes glowPulse {
+  0%, 100% {
+    opacity: 0.35;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.06);
+  }
+}
+
+/* ==========================================================================
+   SCROLL-DRIVEN 3D MOTION GRAPHICS CSS LAYER
+   Premium Motion Archetype: 350-600ms, cubic-bezier(0.4,0,0.2,1)
+   ========================================================================== */
+
+/* Smooth scroll for anchor targets without blocking Next.js page transitions */
+:root:has(:target) {
+  scroll-behavior: smooth;
+}
+
+/* ── Section Transition Zones ──
+   Each section gets a subtle gradient overlap that blends as you scroll */
+section {
+  position: relative;
+  z-index: 2;
+}
+
+section::before {
+  content: '';
+  position: absolute;
+  top: -40px;
+  left: 0;
+  right: 0;
+  height: 80px;
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(250, 247, 242, 0.4) 50%,
+    transparent 100%
+  );
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── Parallax Depth Layers ── */
+.parallax-layer-slow {
+  will-change: transform;
+  transition: transform 100ms linear;
+}
+
+.parallax-layer-medium {
+  will-change: transform;
+  transition: transform 75ms linear;
+}
+
+.parallax-layer-fast {
+  will-change: transform;
+  transition: transform 50ms linear;
+}
+
+/* ── Scroll-Reveal Initial States ──
+   These are set by GSAP ScrollTrigger but CSS provides sensible defaults */
+.scroll-reveal-up {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 600ms var(--ease-smooth), transform 600ms var(--ease-smooth);
+}
+
+.scroll-reveal-up.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.scroll-reveal-left {
+  opacity: 0;
+  transform: translateX(-40px);
+  transition: opacity 700ms var(--ease-smooth), transform 700ms var(--ease-smooth);
+}
+
+.scroll-reveal-left.is-visible {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.scroll-reveal-right {
+  opacity: 0;
+  transform: translateX(40px);
+  transition: opacity 700ms var(--ease-smooth), transform 700ms var(--ease-smooth);
+}
+
+.scroll-reveal-right.is-visible {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.scroll-reveal-scale {
+  opacity: 0;
+  transform: scale(0.92);
+  transition: opacity 500ms var(--ease-smooth), transform 500ms var(--ease-smooth);
+}
+
+.scroll-reveal-scale.is-visible {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* ── 3D Motion Canvas Vignette ──
+   Subtle darkened edges to frame the 3D motion graphics overlay */
+.motion-canvas-vignette::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(
+    ellipse at center,
+    transparent 55%,
+    rgba(250, 247, 242, 0.6) 100%
+  );
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* ── Floating Ambient Particles (CSS fallback layer) ── */
+@keyframes floatOrbit {
+  0% {
+    transform: translateX(0) translateY(0) rotate(0deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.6;
+  }
+  50% {
+    transform: translateX(40px) translateY(-60px) rotate(180deg);
+    opacity: 0.3;
+  }
+  90% {
+    opacity: 0.5;
+  }
+  100% {
+    transform: translateX(0) translateY(0) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+.ambient-float-particle {
+  animation: floatOrbit 12s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+/* ── Scroll-linked Gold Shimmer Band ── */
+@keyframes scrollShimmerBand {
+  0% {
+    background-position: -300% center;
+    opacity: 0;
+  }
+  50% {
+    opacity: 0.15;
+  }
+  100% {
+    background-position: 300% center;
+    opacity: 0;
+  }
+}
+
+.scroll-shimmer-band {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(215, 191, 159, 0.6) 30%,
+    rgba(212, 175, 55, 0.8) 50%,
+    rgba(215, 191, 159, 0.6) 70%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: scrollShimmerBand 6s linear infinite;
+  z-index: 50;
+  pointer-events: none;
+}
+
+/* ── Stagger Cascade Delays ── */
+.stagger-1 { transition-delay: 50ms; }
+.stagger-2 { transition-delay: 100ms; }
+.stagger-3 { transition-delay: 150ms; }
+.stagger-4 { transition-delay: 200ms; }
+.stagger-5 { transition-delay: 250ms; }
+.stagger-6 { transition-delay: 300ms; }
+.stagger-7 { transition-delay: 350ms; }
+.stagger-8 { transition-delay: 400ms; }
+
+/* ── Premium Scroll Progress Indicator ── */
+.scroll-progress-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 3px;
+  background: linear-gradient(
+    90deg,
+    #D7BF9F 0%,
+    #C5A880 40%,
+    #B49064 60%,
+    #8C6A42 100%
+  );
+  z-index: 9999;
+  transition: width 50ms linear;
+  box-shadow: 0 0 10px rgba(215, 191, 159, 0.5);
+  pointer-events: none !important;
+}
+
+/* ── Instant Active Click & Tab Feedback ── */
+button:active,
+.btn-luxury:active,
+[role="tab"]:active,
+[role="button"]:active {
+  transform: scale(0.975);
+  transition-duration: 50ms !important;
+}
+
+/* ==========================================================================
+   ACCESSIBILITY & FOCUS VISIBILITY (Apple HIG & WCAG AA)
+   ========================================================================== */
+*:focus-visible {
+  outline: 2px solid #8F6B38 !important;
+  outline-offset: 2px !important;
+}
+
+/* ==========================================================================
+   REDUCED MOTION COMPLIANCE (HIG accessibility.md & motion.md)
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+  .shimmer-gold::after {
+    display: none !important;
+  }
+}
+
+/* ==========================================================================
+   LIQUID GLASS MATERIAL (Apple HIG materials.md & liquid-glass.md)
+   ========================================================================== */
+.liquid-glass {
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  box-shadow: 0 8px 32px 0 rgba(143, 107, 56, 0.08);
+}
+
+.liquid-glass-dark {
+  background: rgba(30, 27, 24, 0.88);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(215, 191, 159, 0.25);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.25);
+}
+
+/* ==========================================================================
+   LUXURY RECEIPT PRINTING STYLES (@media print)
+   ========================================================================== */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 10mm;
+  }
+
+  /* Hide entire page chrome, navigation, headers, footers and animations */
+  body {
+    background: white !important;
+    color: #1a1816 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  body > *:not(.print-container-root),
+  nav,
+  header,
+  footer,
+  .scroll-progress-bar,
+  #salon-3d-motion-canvas,
+  canvas,
+  .no-print {
+    display: none !important;
+    visibility: hidden !important;
+  }
+
+  /* Only reveal and print the luxury receipt container */
+  #salon-luxury-receipt {
+    display: block !important;
+    visibility: visible !important;
+    position: static !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 auto !important;
+    padding: 16mm !important;
+    background: white !important;
+    border: 3px double #C5A880 !important;
+    border-radius: 8px !important;
+    box-shadow: none !important;
+    page-break-inside: avoid !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  #salon-luxury-receipt * {
+    visibility: visible !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}
+
+/* Hide scrollbar for horizontal swipeable tabs */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+

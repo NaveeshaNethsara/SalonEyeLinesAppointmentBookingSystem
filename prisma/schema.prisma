@@ -1,0 +1,470 @@
+// Salon EyeLines - Production Database Schema
+// PostgreSQL + Prisma ORM
+// Includes exclusion-safe booking model, staff schedules, and multi-channel notifications
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  SUPER_ADMIN
+  SALON_OWNER
+  STAFF
+}
+
+enum AppointmentStatus {
+  PENDING
+  CONFIRMED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+enum PaymentStatus {
+  UNPAID
+  DEPOSIT_PAID
+  PAID_IN_FULL
+  REFUNDED
+}
+
+enum PaymentMethod {
+  CASH
+  CARD_AT_SALON
+  ONLINE_BANK_TRANSFER
+  STRIPE
+}
+
+enum NotificationChannel {
+  WHATSAPP
+  EMAIL
+  SMS
+}
+
+enum NotificationType {
+  BOOKING_CONFIRMATION_CUSTOMER
+  BOOKING_ALERT_SALON_WHATSAPP
+  STYLIST_JOB_ASSIGNMENT
+  APPOINTMENT_REMINDER_24H
+  APPOINTMENT_CANCELLED
+  APPOINTMENT_RESCHEDULED
+}
+
+enum DayOfWeek {
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+  SUNDAY
+}
+
+enum BookingOrigin {
+  ONLINE
+  WALK_IN
+  PHONE
+}
+
+enum BookingStatus {
+  PENDING_DEPOSIT
+  CONFIRMED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+// ----------------------------------------------------
+// 1. SALON & BUSINESS IDENTITY
+// ----------------------------------------------------
+model Salon {
+  id              String   @id @default(cuid())
+  name            String   @default("Salon EyeLines")
+  tagline         String?  @default("Elegance Redefined")
+  slug            String   @unique @default("salon-eyelines")
+  phone           String   @default("+94775474996")
+  whatsappNumber  String   @default("+94775474996")
+  email           String?  @default("eyelinessalon@gmail.com")
+  address         String   @default("48, Ganegama Road, Aluthgama 12080, Sri Lanka")
+  latitude        Float?   @default(6.4250)
+  longitude       Float?   @default(79.9950)
+  timezone        String   @default("Asia/Colombo")
+  currency        String   @default("LKR")
+  logoUrl         String?  @default("/images/salon_eyelines_logo.jpg")
+  heroImageUrl    String?  @default("/images/salon_hero.jpg")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  services          Service[]
+  staff             Staff[]
+  appointments      Appointment[]
+  bookings          Booking[]
+  businessClosures  BusinessClosure[]
+  siteContents      SiteContent[]
+  galleryImages     GalleryImage[]
+
+  @@map("salons")
+}
+
+// ----------------------------------------------------
+// 2. SERVICES & CATEGORIES
+// ----------------------------------------------------
+model Service {
+  id              String   @id @default(cuid())
+  salonId         String
+  salon           Salon    @relation(fields: [salonId], references: [id], onDelete: Cascade)
+  name            String
+  slug            String   @unique
+  category        String   // "eyelines", "bridal", "facials", "hair", "nails"
+  categoryName    String   // e.g. "Eyelines & Lash Lounge"
+  tagline         String?
+  description     String
+  priceLKR        Decimal  @db.Decimal(10, 2)
+  durationMinutes Int      @default(60) // in minutes
+  imageUrl        String?
+  isPopular       Boolean  @default(false)
+  isActive        Boolean  @default(true)
+  sortOrder       Int      @default(0)
+  requiresDeposit Boolean  @default(false)
+  depositAmountLKR Decimal? @default(0) @db.Decimal(10, 2)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  appointments    Appointment[]
+  bookingItems    BookingItem[]
+  staffServices   StaffService[]
+
+  @@index([salonId, category])
+  @@map("services")
+}
+
+// ----------------------------------------------------
+// 3. STAFF & SPECIALISTS
+// ----------------------------------------------------
+model Staff {
+  id          String   @id @default(cuid())
+  salonId     String
+  salon       Salon    @relation(fields: [salonId], references: [id], onDelete: Cascade)
+  userId      String?  @unique
+  user        User?    @relation(fields: [userId], references: [id])
+  name        String
+  role        String   // "Founder & Master Bridal Director", "Senior Lash Artist", etc.
+  phone       String?
+  email       String?
+  bio         String?
+  avatarUrl   String?
+  experience  String?  // e.g. "15+ Years Experience"
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  workingHours   WorkingHours[]
+  timeOff        StaffTimeOff[]
+  appointments   Appointment[]
+  bookingItems   BookingItem[]
+  slotHolds      SlotHold[]
+  staffServices  StaffService[]
+
+  @@index([salonId, isActive])
+  @@map("staff")
+}
+
+model StaffService {
+  id                    String   @id @default(cuid())
+  staffId               String
+  serviceId             String
+  staff                 Staff    @relation(fields: [staffId], references: [id], onDelete: Cascade)
+  service               Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  customPriceLKR        Decimal? @db.Decimal(10, 2)
+  customDurationMinutes Int?
+
+  @@unique([staffId, serviceId])
+  @@map("staff_services")
+}
+
+// ----------------------------------------------------
+// 4. WORKING HOURS & TIME OFF
+// ----------------------------------------------------
+model WorkingHours {
+  id           String    @id @default(cuid())
+  staffId      String
+  staff        Staff     @relation(fields: [staffId], references: [id], onDelete: Cascade)
+  dayOfWeek    DayOfWeek
+  startTime    String    // e.g. "08:30"
+  endTime      String    // e.g. "18:30"
+  isWorkingDay Boolean   @default(true)
+  breaks       Json?     // Array of { name: string, startTime: string, endTime: string }
+
+  @@unique([staffId, dayOfWeek])
+  @@map("working_hours")
+}
+
+model StaffTimeOff {
+  id        String   @id @default(cuid())
+  staffId   String
+  staff     Staff    @relation(fields: [staffId], references: [id], onDelete: Cascade)
+  startDate DateTime
+  endDate   DateTime
+  reason    String?
+  isApproved Boolean @default(true)
+  createdAt DateTime @default(now())
+
+  @@index([staffId, startDate, endDate])
+  @@map("staff_time_off")
+}
+
+model BusinessClosure {
+  id        String   @id @default(cuid())
+  salonId   String
+  salon     Salon    @relation(fields: [salonId], references: [id], onDelete: Cascade)
+  date      DateTime @db.Date
+  reason    String
+  createdAt DateTime @default(now())
+
+  @@unique([salonId, date])
+  @@map("business_closures")
+}
+
+// ----------------------------------------------------
+// 5. CUSTOMERS (Supports Guest Bookings)
+// ----------------------------------------------------
+model Customer {
+  id              String   @id @default(cuid())
+  name            String
+  phone           String   @unique // primary contact key (WhatsApp)
+  email           String?
+  notes           String?  // Allergies, skin sensitivity, preference history
+  totalBookings   Int      @default(1)
+  noShowCount     Int      @default(0)
+  isHouseCustomer Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  appointments  Appointment[]
+  bookings      Booking[]
+
+  @@index([phone])
+  @@map("customers")
+}
+
+// ----------------------------------------------------
+// 6. APPOINTMENTS (Legacy 1:1 Resource Booking)
+// ----------------------------------------------------
+model Appointment {
+  id              String            @id @default(cuid())
+  referenceCode   String            @unique // e.g. "EL-849201"
+  salonId         String
+  salon           Salon             @relation(fields: [salonId], references: [id], onDelete: Cascade)
+  customerId      String
+  customer        Customer          @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  serviceId       String
+  service         Service           @relation(fields: [serviceId], references: [id], onDelete: Restrict)
+  staffId         String
+  staff           Staff             @relation(fields: [staffId], references: [id], onDelete: Restrict)
+  
+  startTime       DateTime          // UTC timestamp
+  endTime         DateTime          // UTC timestamp (startTime + service.durationMinutes)
+  status          AppointmentStatus @default(CONFIRMED)
+  occasion        String?           @default("Regular Care & Grooming")
+  specialNotes    String?
+  
+  totalPriceLKR   Decimal           @db.Decimal(10, 2)
+  depositPaidLKR  Decimal?          @default(0) @db.Decimal(10, 2)
+  
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  payment         Payment?
+  notifications   Notification[]
+
+  @@index([salonId, startTime, endTime])
+  @@index([staffId, startTime, endTime])
+  @@index([customerId])
+  @@index([status])
+  @@map("appointments")
+}
+
+// ----------------------------------------------------
+// 6.1 COMPOSITE BOOKINGS & BOOKING ITEMS (Specification V2)
+// ----------------------------------------------------
+model Booking {
+  id                    String        @id @default(cuid())
+  referenceCode         String        @unique // e.g. "EL-849201"
+  salonId               String
+  salon                 Salon         @relation(fields: [salonId], references: [id], onDelete: Cascade)
+  customerId            String
+  customer              Customer      @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  bookingOrigin         BookingOrigin @default(ONLINE)
+  status                BookingStatus @default(CONFIRMED)
+  startTime             DateTime      // UTC start of first item
+  endTime               DateTime      // UTC end of last item (including turnaround buffer)
+  totalPriceLKR         Decimal       @db.Decimal(10, 2)
+  depositRequiredLKR    Decimal?      @default(0) @db.Decimal(10, 2)
+  depositPaidLKR        Decimal?      @default(0) @db.Decimal(10, 2)
+  occasion              String?       @default("Regular Care & Grooming")
+  specialNotes          String?
+  idempotencyKey        String?       @unique
+  depositSlipUrl        String?
+  depositVerifiedAt     DateTime?
+  cancellationReason    String?
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+
+  items                 BookingItem[]
+  payments              Payment[]
+  notifications         Notification[]
+
+  @@index([salonId, startTime, endTime])
+  @@index([customerId])
+  @@index([status])
+  @@map("bookings")
+}
+
+model BookingItem {
+  id                      String   @id @default(cuid())
+  bookingId               String
+  booking                 Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  serviceId               String
+  service                 Service  @relation(fields: [serviceId], references: [id], onDelete: Restrict)
+  staffId                 String
+  staff                   Staff    @relation(fields: [staffId], references: [id], onDelete: Restrict)
+  startTime               DateTime // UTC
+  endTime                 DateTime // UTC (startTime + duration)
+  bufferEndTime           DateTime // UTC (endTime + 5 mins buffer)
+  priceSnapshotLKR        Decimal  @db.Decimal(10, 2)
+  durationSnapshotMinutes Int
+  itemOrder               Int      @default(0)
+  createdAt               DateTime @default(now())
+
+  @@index([staffId, startTime, bufferEndTime])
+  @@index([bookingId])
+  @@map("booking_items")
+}
+
+model SlotHold {
+  id           String   @id @default(cuid())
+  staffId      String
+  staff        Staff    @relation(fields: [staffId], references: [id], onDelete: Cascade)
+  startTime    DateTime // UTC
+  endTime      DateTime // UTC
+  expiresAt    DateTime // UTC
+  sessionToken String
+  createdAt    DateTime @default(now())
+
+  @@index([staffId, startTime, endTime])
+  @@index([expiresAt])
+  @@map("slot_holds")
+}
+
+// ----------------------------------------------------
+// 7. PAYMENTS
+// ----------------------------------------------------
+model Payment {
+  id             String        @id @default(cuid())
+  appointmentId  String?       @unique
+  appointment    Appointment?  @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  bookingId      String?
+  booking        Booking?      @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  amountLKR      Decimal       @db.Decimal(10, 2)
+  status         PaymentStatus @default(UNPAID)
+  method         PaymentMethod @default(CASH)
+  transactionRef String?
+  paidAt         DateTime?
+  createdAt      DateTime      @default(now())
+
+  @@map("payments")
+}
+
+// ----------------------------------------------------
+// 8. MULTI-CHANNEL NOTIFICATIONS
+// ----------------------------------------------------
+model Notification {
+  id             String              @id @default(cuid())
+  appointmentId  String?
+  appointment    Appointment?        @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
+  bookingId      String?
+  booking        Booking?            @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+  type           NotificationType
+  channel        NotificationChannel // WHATSAPP, EMAIL, SMS
+  recipient      String              // Phone number or email
+  messageContent String
+  deliveryStatus String              @default("PENDING") // PENDING, DELIVERED, FAILED
+  externalMsgId  String?             // e.g. WhatsApp / Twilio / SendGrid ID
+  sentAt         DateTime?
+  createdAt      DateTime            @default(now())
+
+  @@index([appointmentId])
+  @@index([bookingId])
+  @@index([deliveryStatus])
+  @@map("notifications")
+}
+
+// ----------------------------------------------------
+// 9. GALLERY & SITE CMS CONTENT
+// ----------------------------------------------------
+model GalleryImage {
+  id        String   @id @default(cuid())
+  salonId   String
+  salon     Salon    @relation(fields: [salonId], references: [id], onDelete: Cascade)
+  title     String
+  category  String   // "bridal", "eyelines", "hair", "interior"
+  imageUrl  String
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([salonId, category])
+  @@map("gallery_images")
+}
+
+model SiteContent {
+  id        String   @id @default(cuid())
+  salonId   String
+  salon     Salon    @relation(fields: [salonId], references: [id], onDelete: Cascade)
+  key       String   // e.g. "hero_headline", "about_story", "opening_hours"
+  value     String
+  section   String   // "hero", "about", "highlights", "bridal"
+  updatedAt DateTime @updatedAt
+
+  @@unique([salonId, key])
+  @@map("site_contents")
+}
+
+// ----------------------------------------------------
+// 10. AUTH & SECURITY (Auth.js / NextAuth / Nest Auth)
+// ----------------------------------------------------
+model User {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  name         String
+  passwordHash String
+  role         Role      @default(STAFF)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  staffProfile Staff?
+  auditLogs    AuditLog[]
+
+  @@map("users")
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action    String   // e.g. "CREATE_APPOINTMENT", "UPDATE_PRICE", "CANCEL_BOOKING"
+  entity    String   // e.g. "Appointment", "Service", "Staff"
+  entityId  String?
+  metadata  Json?
+  timestamp DateTime @default(now())
+
+  @@index([userId])
+  @@index([entity, entityId])
+  @@map("audit_logs")
+}

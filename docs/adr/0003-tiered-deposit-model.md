@@ -1,0 +1,3 @@
+# Tiered Booking Deposit Model
+
+Treatments range from fast grooming sessions (LKR 3,000) to multi-hour bridal dressing packages (LKR 75,000) where late cancellations cause severe financial and specialist utilization loss. We decided on a two-tier payment model where standard grooming treatments require zero deposit and pay at the salon, while high-value bridal packages require an advance deposit (via online payment or bank transfer receipt upload) to transition from `PENDING_DEPOSIT` to `CONFIRMED`. This eliminates booking friction for routine appointments while safeguarding salon revenue for high-investment time blocks.
